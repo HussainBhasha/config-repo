@@ -1,0 +1,63 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service
+  cloud:
+    config:
+      enabled: false  # Completely disables Spring Cloud Config
+      import-check:
+        enabled: false  # Disables the config server check
+  datasource:
+    url: jdbc:mysql://localhost:3306/user_db?createDatabaseIfNotExist=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+      show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# Remove ALL spring.config.import references
+
+#spring:
+#  application:
+#    name: user-service  # REQUIRED for config server lookup
+#  config:
+#    import: optional:configserver:http://localhost:8888  # 'optional' prevents startup failure
+#  cloud:
+#    config:
+#      uri: http://localhost:8888
+#      fail-fast: false
+#      profile: dev
+#      enabled: true
+#  profiles:
+#    active: dev
+resilience4j:
+  circuitbreaker:
+    instances:
+      productServiceCB:
+        registerHealthIndicator: true
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 2
+
+  retry:
+    instances:
+      productServiceRetry:
+        maxAttempts: 3
+        waitDuration: 2s
+        retryExceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+
+  timelimiter:
+    instances:
+      productServiceTL:
+        timeoutDuration: 4s
+        cancelRunningFuture: true
